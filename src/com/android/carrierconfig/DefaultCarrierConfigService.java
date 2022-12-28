@@ -43,8 +43,8 @@ import java.util.regex.Pattern;
  * default network overrides, and carrier overrides. The default network overrides are provided by
  * this service. For a given network, we look for a matching XML file in our assets folder, and
  * return the PersistableBundle from that file. Assets are preferred over Resources because resource
- * overlays only support using MCC+MNC and that doesn't work with MVNOs. The only resource file used
- * is vendor.xml, to provide vendor-specific overrides.
+ * overlays only support using MCC+MNC and that doesn't work with MVNOs. The only resource files used
+ * are vendor.xml, platform.xml, and product.xml to provide overrides.
  */
 public class DefaultCarrierConfigService extends CarrierService {
 
@@ -81,7 +81,7 @@ public class DefaultCarrierConfigService extends CarrierService {
      * {@link TelephonyManager#UNKNOWN_CARRIER_ID}. Note <carriername> is to improve the
      * readability which should not be used to search asset files. If there is no configuration,
      * then we look for a file named after the MCC+MNC of {@code id} as a fallback. Last, we read
-     * res/xml/vendor.xml.
+     * res/xml/vendor.xml, res/xml/platform.xml, and res/xml/product.xml.
      *
      * carrierid.xml doesn't support multiple bundles with filters as each carrier including MVNOs
      * has its own config file named after its carrier id.
@@ -126,6 +126,18 @@ public class DefaultCarrierConfigService extends CarrierService {
                         getApplicationContext().getResources().getXml(R.xml.vendor_no_sim);
                 PersistableBundle vendorConfig = readConfigFromXml(vendorInput, null, sku);
                 config.putAll(vendorConfig);
+
+                // Treat platform_no_sim.xml as if it were appended to the no sim config file.
+                XmlPullParser platformInput =
+                        getApplicationContext().getResources().getXml(R.xml.platform_no_sim);
+                PersistableBundle platformConfig = readConfigFromXml(platformInput, null, sku);
+                config.putAll(platformConfig);
+
+                // Treat product_no_sim.xml as if it were appended to the no sim config file.
+                XmlPullParser productInput =
+                        getApplicationContext().getResources().getXml(R.xml.product_no_sim);
+                PersistableBundle productConfig = readConfigFromXml(productInput, null, sku);
+                config.putAll(productConfig);
             }
             catch (IOException|XmlPullParserException e) {
                 Log.e(TAG, "Failed to load config for no SIM", e);
@@ -184,6 +196,26 @@ public class DefaultCarrierConfigService extends CarrierService {
         try {
             PersistableBundle vendorConfig = readConfigFromXml(vendorInput, id, sku);
             config.putAll(vendorConfig);
+        }
+        catch (IOException | XmlPullParserException e) {
+            Log.e(TAG, e.toString());
+        }
+
+        // Treat platform.xml as if it were appended to the carrier config file we read.
+        XmlPullParser platformInput = getApplicationContext().getResources().getXml(R.xml.platform);
+        try {
+            PersistableBundle platformConfig = readConfigFromXml(platformInput, id, sku);
+            config.putAll(platformConfig);
+        }
+        catch (IOException | XmlPullParserException e) {
+            Log.e(TAG, e.toString());
+        }
+
+        // Treat product.xml as if it were appended to the carrier config file we read.
+        XmlPullParser productInput = getApplicationContext().getResources().getXml(R.xml.product);
+        try {
+            PersistableBundle productConfig = readConfigFromXml(productInput, id, sku);
+            config.putAll(productConfig);
         }
         catch (IOException | XmlPullParserException e) {
             Log.e(TAG, e.toString());
