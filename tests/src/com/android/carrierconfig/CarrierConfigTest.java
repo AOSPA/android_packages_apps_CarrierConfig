@@ -262,6 +262,20 @@ public class CarrierConfigTest extends InstrumentationTestCase {
             } catch (Throwable e) {
                 throw new AssertionError("Problem in vendor.xml: " + e.getMessage(), e);
             }
+            // Check platform.xml too
+            try {
+                Resources res = getInstrumentation().getTargetContext().getResources();
+                checker.check(res.getXml(R.xml.platform), mccmnc);
+            } catch (Throwable e) {
+                throw new AssertionError("Problem in platform.xml: " + e.getMessage(), e);
+            }
+            // Check product.xml too
+            try {
+                Resources res = getInstrumentation().getTargetContext().getResources();
+                checker.check(res.getXml(R.xml.product), mccmnc);
+            } catch (Throwable e) {
+                throw new AssertionError("Problem in product.xml: " + e.getMessage(), e);
+            }
         } catch (IOException e) {
             fail(e.toString());
         }
